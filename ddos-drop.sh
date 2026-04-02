@@ -1,22 +1,22 @@
 #!/bin/sh
 
 #config Section
-wan_device="" #setting a device between the quotation marks disable auto detection, "" autotection
+wan_device="pppoe-wan" #setting a device between the quotation marks disable auto detection, "" autotection
 	          #you can set more then one Wan interface with a comma between the device names for example "eth0,eth1"
 
-bogon="0" #enable Bogon filter "1" enable "0" disable
+bogon="1" #enable Bogon filter "1" enable "0" disable
 
 forward_router="0.0.0.0" #Enter here the Ip address/network of the upstream router if you use the Bogon filter and have a forward router.
 			                 #You can add multiple ip addresses or networks with a comma betwen the addresses, network format at example 192.168.0.0/24
-syn_flood="0"  #enable syn flood protection
+syn_flood="1"  #enable syn flood protection
 
-icmp_flood="0" #enable icmp flood protection
+icmp_flood="1" #enable icmp flood protection
 
-udp_flood="0"  #enable udp flood protection
+udp_flood="1"  #enable udp flood protection
 
-port_scan_detection="0" #enable Portscan detection
+port_scan_detection="1" #enable Portscan detection
 
-arp_limit_enable="0" #enable ARP limit "1" enable "0" disable
+arp_limit_enable="1" #enable ARP limit "1" enable "0" disable
 
 wan_input_drop_enable="0"       #Drops inet input to wan interface
 
@@ -28,9 +28,9 @@ reject_with_icmp="0"		#Reject Wan/Wireguard input with Icmp unreachable
 
 arp_limit="1"	#accepted ARP request per second and on-the-fly per MAC address
 
-syn_flood_limit="25" 	   #syn flood limit
+syn_flood_limit="100" 	   #syn flood limit
 
-syn_flood_burst_limit="50" #indicates the number of packets that can exceed the rate limit, must be greater than or equal to 1
+syn_flood_burst_limit="200" #indicates the number of packets that can exceed the rate limit, must be greater than or equal to 1
 
 icmp_flood_limit="15"      #icmp flood limit
 
@@ -46,7 +46,7 @@ portscan_drop_time="1h"   #Sets the time limit in which the source of the port s
 
 portscan_src_ports="22" #remote ports for which portscan does not respond  
 
-portscan_dst_ports="22" #target ports for which portscan does not respond
+portscan_dst_ports="{ 22, 6900, 6121, 5121 }" #target ports for which portscan does not respond
 
 bogon_adresses="0.0.0.0/8, \
 		10.0.0.0/8, \
@@ -281,6 +281,10 @@ nft -f - <<TABLE
 			ct state new \
 			counter drop
 
+# >>> PROTECAO RAGNAROK (Login Server) <<<
+		# Limita flood de tentativas de login na Porta 6900
+		tcp dport 6900 limit rate over 5/10 second counter drop
+		
 		ct state established, related counter accept
 
         }
