@@ -281,9 +281,21 @@ nft -f - <<TABLE
 			ct state new \
 			counter drop
 
-# >>> PROTECAO RAGNAROK (Login Server) <<<
-		# Limita flood de tentativas de login na Porta 6900
+# >>> PROTECAO RAGNAROK (Login, Char e Map) <<<
+		
+		# Login Server (6900): Protecao estrita contra Brute Force no SQL
 		tcp dport 6900 limit rate over 5/10 second counter drop
+		
+		# Char Server (6121): Limite padrao
+		tcp dport 6121 limit rate over 10/10 second counter drop
+		
+		# Map Server (5121): Protecao contra flood, mas permitindo o jogador teleportar rapido
+		# Limita a 20 conexões em 10 segundos. Se exceder, bloqueia.
+		tcp dport 5121 limit rate over 20/10 second counter drop
+
+		# (Opcional) Limite global de conexoes simultaneas POR IP
+		# Evita que um unico IP abra centenas de conexoes lentas (Slowloris)
+		tcp dport { 6900, 6121, 5121 } meter conn_limit { ip saddr ct count over 25 } counter drop
 		
 		ct state established, related counter accept
 
