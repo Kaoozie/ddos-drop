@@ -283,18 +283,16 @@ nft -f - <<TABLE
 
 # >>> PROTECAO RAGNAROK (Login, Char e Map) <<<
 		
-		# Login Server (6900): Protecao estrita contra Brute Force no SQL
-		tcp dport 6900 limit rate over 5/10 second counter drop
+		# Login Server (6900): Limita a 2 conexões por segundo, com burst (margem) de 10
+		tcp dport 6900 limit rate over 2/second burst 10 packets counter drop
 		
 		# Char Server (6121): Limite padrao
-		tcp dport 6121 limit rate over 10/10 second counter drop
+		tcp dport 6121 limit rate over 3/second burst 15 packets counter drop
 		
-		# Map Server (5121): Protecao contra flood, mas permitindo o jogador teleportar rapido
-		# Limita a 20 conexões em 10 segundos. Se exceder, bloqueia.
-		tcp dport 5121 limit rate over 20/10 second counter drop
+		# Map Server (5121): Permitindo o jogador teleportar rapido entre mapas
+		tcp dport 5121 limit rate over 5/second burst 30 packets counter drop
 
-		# (Opcional) Limite global de conexoes simultaneas POR IP
-		# Evita que um unico IP abra centenas de conexoes lentas (Slowloris)
+		# Limite global de conexoes simultaneas POR IP (Slowloris/Flood)
 		tcp dport { 6900, 6121, 5121 } meter conn_limit { ip saddr ct count over 25 } counter drop
 		
 		ct state established, related counter accept
